@@ -1,11 +1,16 @@
-name: Build and deploy
+name: Release draft
+
+permissions:
+  id-token: write
+  contents: read
+  attestations: write
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
+
     runs-on: ubuntu-latest
 
     steps:
@@ -14,23 +19,26 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
-          node-version: 24
+        node-version: 24
 
       - name: Deps
         run: |
-          npm install --global pnpm
-          pnpm i
+        npm install --global pnpm
+        pnpm i
 
       - name: Build plugin(s)
         run: pnpm lune ci
 
-      - name: Run SSG
+      - name: Run CI
         run: |
-          cp -r static/* dist || true
-          pnpm lune ssg ci
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        cp -r static/* dist || true
+        pnpm lune ci
+    
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          repository: nilFinx/ShelterOCCR
+          draft: true
+          token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+          files: |
+            dist/shelteroccr/*
